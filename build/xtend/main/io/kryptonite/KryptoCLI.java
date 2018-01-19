@@ -1,13 +1,12 @@
 package io.kryptonite;
 
 import io.kryptonite.RCommand;
-import io.kryptonite.api.Bittrex;
-import io.kryptonite.api.CurrencyPair;
-import io.kryptonite.api.dto.Ticker;
+import io.kryptonite.adapter.Bitfinex;
+import io.kryptonite.api.Exchanger;
+import io.kryptonite.api.Subscription;
 import org.eclipse.xtend2.lib.StringConcatenation;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 import org.eclipse.xtext.xbase.lib.InputOutput;
-import org.eclipse.xtext.xbase.lib.ObjectExtensions;
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure1;
 import picocli.CommandLine;
 
@@ -61,12 +60,11 @@ public class KryptoCLI {
   }
   
   public static void test() {
-    Bittrex _bittrex = new Bittrex();
-    final Procedure1<Bittrex> _function = (Bittrex it) -> {
-      CurrencyPair _currencyPair = new CurrencyPair("BTC", "XLM");
-      final Ticker ticker = it.getTicker(_currencyPair, "thirtyMin");
-      InputOutput.<Ticker>println(ticker);
+    Bitfinex _bitfinex = new Bitfinex();
+    final Exchanger clt = new Exchanger(_bitfinex);
+    final Procedure1<Subscription> _function = (Subscription it) -> {
+      InputOutput.<String>println("Subcription...");
     };
-    ObjectExtensions.<Bittrex>operator_doubleArrow(_bittrex, _function);
+    clt.subscribe("tBTCUSD").then(_function);
   }
 }

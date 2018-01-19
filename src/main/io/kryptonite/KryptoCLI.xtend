@@ -1,6 +1,7 @@
 package io.kryptonite
 
-import io.kryptonite.api.Bittrex
+import io.kryptonite.adapter.Bitfinex
+import io.kryptonite.api.Exchanger
 import io.kryptonite.api.CurrencyPair
 import picocli.CommandLine
 import picocli.CommandLine.Command
@@ -75,9 +76,9 @@ class KryptoCLI {
   }
   
   def static void test() {
-    new Bittrex() => [
-      val ticker = getTicker(new CurrencyPair("BTC", "XLM"), "thirtyMin")
-      println(ticker)
+    val clt = new Exchanger(new Bitfinex)
+    clt.subscribe("tBTCUSD").then[
+      println("Subcription...")
     ]
   }
 }
