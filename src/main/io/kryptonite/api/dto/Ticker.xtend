@@ -1,17 +1,17 @@
 package io.kryptonite.api.dto
 
-import org.eclipse.xtend.lib.annotations.Data
 import java.time.LocalDateTime
+import org.eclipse.xtend.lib.annotations.Data
 
 @Data
 class Ticker {
-  public val LocalDateTime timestamp
-  public val double volume 
+  public val time = LocalDateTime.now
   
-  public val double open
-  public val double high
-  public val double low
-  public val double close
+  public val Double price
+  public val Double bid
+  public val Double ask
   
-  
+  public val Double volume
+  public val Double high
+  public val Double low
 }

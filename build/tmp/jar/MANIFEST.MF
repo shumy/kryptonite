@@ -2,11 +2,11 @@ Manifest-Version: 1.0
 Implementation-Title: kryptonite
 Implementation-Version: 0.1.0
 Built-By: micaelpedrosa@gmail.com
-Class-Path: deps/logback-classic-1.1.8.jar deps/org.eclipse.xtend.lib-
- 2.12.0.jar deps/picocli-1.0.1.jar deps/Java-WebSocket-1.3.7.jar deps/
- jackson-core-2.9.2.jar deps/jackson-databind-2.9.2.jar deps/jackson-a
- nnotations-2.9.2.jar deps/logback-core-1.1.8.jar deps/slf4j-api-1.7.2
- 1.jar deps/org.eclipse.xtext.xbase.lib-2.12.0.jar deps/org.eclipse.xt
- end.lib.macro-2.12.0.jar deps/guava-18.0.jar
+Class-Path: deps/jfxrt.jar deps/logback-classic-1.1.8.jar deps/org.ecl
+ ipse.xtend.lib-2.12.0.jar deps/picocli-1.0.1.jar deps/Java-WebSocket-
+ 1.3.7.jar deps/jackson-core-2.9.2.jar deps/jackson-databind-2.9.2.jar
+  deps/jackson-annotations-2.9.2.jar deps/logback-core-1.1.8.jar deps/
+ slf4j-api-1.7.21.jar deps/org.eclipse.xtext.xbase.lib-2.12.0.jar deps
+ /org.eclipse.xtend.lib.macro-2.12.0.jar deps/guava-18.0.jar
 Main-Class: io.kryptonite.KryptoCLI
 

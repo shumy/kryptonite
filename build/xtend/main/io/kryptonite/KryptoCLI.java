@@ -1,13 +1,18 @@
 package io.kryptonite;
 
+import ch.qos.logback.classic.Level;
 import io.kryptonite.RCommand;
 import io.kryptonite.adapter.Bitfinex;
 import io.kryptonite.api.Exchanger;
 import io.kryptonite.api.Subscription;
+import io.kryptonite.api.dto.Candle;
 import org.eclipse.xtend2.lib.StringConcatenation;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 import org.eclipse.xtext.xbase.lib.InputOutput;
+import org.eclipse.xtext.xbase.lib.ObjectExtensions;
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure1;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 @SuppressWarnings("all")
@@ -60,11 +65,21 @@ public class KryptoCLI {
   }
   
   public static void test() {
+    Logger _logger = LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+    final Procedure1<ch.qos.logback.classic.Logger> _function = (ch.qos.logback.classic.Logger it) -> {
+      it.setLevel(Level.ERROR);
+    };
+    ObjectExtensions.<ch.qos.logback.classic.Logger>operator_doubleArrow(
+      ((ch.qos.logback.classic.Logger) _logger), _function);
     Bitfinex _bitfinex = new Bitfinex();
     final Exchanger clt = new Exchanger(_bitfinex);
-    final Procedure1<Subscription> _function = (Subscription it) -> {
-      InputOutput.<String>println("Subcription...");
+    final Procedure1<Subscription<Candle>> _function_1 = (Subscription<Candle> it) -> {
+      InputOutput.<String>println("Subscribed to XRPUSD 1m candles...");
+      final Procedure1<Candle> _function_2 = (Candle it_1) -> {
+        InputOutput.<Candle>println(it_1);
+      };
+      it.onMessage(_function_2);
     };
-    clt.subscribe("tBTCUSD").then(_function);
+    clt.<Candle>subscribe(Candle.class, "1m:tXRPUSD").then(_function_1);
   }
 }

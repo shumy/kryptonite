@@ -1,11 +1,17 @@
 package io.kryptonite
 
-import io.kryptonite.adapter.Bitfinex
-import io.kryptonite.api.Exchanger
-import io.kryptonite.api.CurrencyPair
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import org.slf4j.LoggerFactory
 import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
+import javafx.application.Application
+
+import io.kryptonite.adapter.Bitfinex
+import io.kryptonite.api.Exchanger
+import io.kryptonite.trader.SimulationTrader
+import io.kryptonite.api.dto.Candle
 
 @Command(
   name = "kryptonite-cli", footer = "Copyright(c) 2017",
@@ -76,9 +82,19 @@ class KryptoCLI {
   }
   
   def static void test() {
+    //println("Searching JavaFX at: " + System.getProperty("java.home"))
+    
+    LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger => [
+      level = Level.ERROR
+    ]
+    
+    //Application.launch(Wallet)
     val clt = new Exchanger(new Bitfinex)
-    clt.subscribe("tBTCUSD").then[
-      println("Subcription...")
+    clt.subscribe(Candle, "1m:tXRPUSD").then[
+      println("Subscribed to XRPUSD 1m candles...")
+      onMessage[
+        println(it)
+      ]
     ]
   }
 }

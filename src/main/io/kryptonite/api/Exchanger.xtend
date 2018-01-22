@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
 import io.kryptonite.adapter.IAdapter
 import io.kryptonite.api.async.Promise
+import io.kryptonite.api.dto.Candle
+import io.kryptonite.api.dto.Ticker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -14,7 +16,7 @@ class Exchanger {
   val executor = Executors.newSingleThreadScheduledExecutor
   val listeners = new ConcurrentHashMap<String, (JsonNode)=>void>
   
-  package val subscriptions = new ConcurrentHashMap<Long, Subscription>
+  package val subscriptions = new ConcurrentHashMap<Long, Subscription<?>>
   
   new(IAdapter adapter) {
     this.adapter = adapter
@@ -51,18 +53,21 @@ class Exchanger {
     ], 5, TimeUnit.SECONDS)
   }
   
-  def Promise<Subscription> subscribe(String symbol) {
-    new Promise<Subscription>[
-      adapter.send(#{ "event" -> "subscribe", "channel" -> "ticker", "symbol" -> symbol })
+  def <DTO> Promise<Subscription<DTO>> subscribe(Class<DTO> type, String symbol) {
+    new Promise<Subscription<DTO>>[
       listener("subscribed")[ rpl |
-        val type = rpl.get("channel").asText
         val chanId = rpl.get("chanId").asLong
         
-        val sub = new Subscription(this, type, chanId)
+        val sub = new Subscription<DTO>(this, type, chanId)
         subscriptions.put(chanId, sub)
         
         resolve(sub)
       ]
+      
+      switch(type) {
+        case Ticker: adapter.send(#{ "event" -> "subscribe", "channel" -> "ticker", "symbol" -> symbol }) 
+        case Candle: adapter.send(#{ "event" -> "subscribe", "channel" -> "candles", "key" -> "trade:" + symbol })
+      }
     ]
   }
 }

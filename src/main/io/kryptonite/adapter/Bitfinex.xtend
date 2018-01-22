@@ -6,8 +6,11 @@ import java.net.URI
 import java.util.Map
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
+import org.slf4j.LoggerFactory
 
 class Bitfinex implements IAdapter {
+  static val logger = LoggerFactory.getLogger(Bitfinex)
+  
   val mapper = new ObjectMapper
   val url = new URI("wss://api.bitfinex.com/ws/2")
   
@@ -18,12 +21,12 @@ class Bitfinex implements IAdapter {
   new() {
     ws = new WebSocketClient(url) {
       override onOpen(ServerHandshake handshakedata) {
-        println("OPEN: " + handshakedata.httpStatus)
+        logger.info("OPEN: {}", handshakedata.httpStatus)
         send(#{ "event" -> "conf", "flags" -> 32 }) //Enable all times as date strings.
       }
       
       override onMessage(String txtMsg) {
-        println("RECEIVED: " + txtMsg)
+        logger.info("RECEIVED: {}", txtMsg)
         val msg = mapper.readTree(txtMsg)
         
         if (!process(msg))
@@ -31,13 +34,13 @@ class Bitfinex implements IAdapter {
       }
       
       override onClose(int code, String reason, boolean remote) {
-        println("CLOSED: " + reason)
+        logger.info("CLOSED: {}", reason)
         
         //TODO: reconnect?
       }
       
       override onError(Exception ex) {
-        println("ERROR: " + ex.message)
+        logger.error("{}", ex.message)
         ex.printStackTrace
       }
     }
@@ -66,14 +69,14 @@ class Bitfinex implements IAdapter {
       //20060 : Entering in Maintenance mode. Please pause any activity and resume after receiving the info message 20061 (it should take 120 seconds at most).
       //20061 : Maintenance ended. You can resume normal activity. It is advised to unsubscribe/subscribe again all channels.
       
-      println('''ERROR: Can't handle info codes, not implemented!''')
+      logger.error("Can't handle info codes, not implemented! CODE = {}", codeNode.asLong)
       System.exit(-1)
       return true
     }
     
     val version = msg.get("version").asLong
     if (version !== 2) {
-      println('''ERROR: Version «version» is not supported! Only version 2.''')
+      logger.error("Version {} is not supported! Only version 2.", version)
       System.exit(-1)
     }
     
@@ -92,13 +95,13 @@ class Bitfinex implements IAdapter {
   
   override send(JsonNode msg) {
     val txtMsg = mapper.writeValueAsString(msg)
-    println("SEND: " + txtMsg)
+    logger.info("SEND: {}", txtMsg)
     ws.send(txtMsg)
   }
   
   override send(Map<String, ?> msg) {
     val txtMsg = mapper.writeValueAsString(msg)
-    println("SEND: " + txtMsg)
+    logger.info("SEND: {}", txtMsg)
     ws.send(txtMsg)
   }
   

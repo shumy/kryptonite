@@ -8,26 +8,28 @@ import org.eclipse.xtext.xbase.lib.util.ToStringBuilder;
 @Data
 @SuppressWarnings("all")
 public class Ticker {
-  public final LocalDateTime timestamp;
+  public final LocalDateTime time = LocalDateTime.now();
   
-  public final double volume;
+  public final Double price;
   
-  public final double open;
+  public final Double bid;
   
-  public final double high;
+  public final Double ask;
   
-  public final double low;
+  public final Double volume;
   
-  public final double close;
+  public final Double high;
   
-  public Ticker(final LocalDateTime timestamp, final double volume, final double open, final double high, final double low, final double close) {
+  public final Double low;
+  
+  public Ticker(final Double price, final Double bid, final Double ask, final Double volume, final Double high, final Double low) {
     super();
-    this.timestamp = timestamp;
+    this.price = price;
+    this.bid = bid;
+    this.ask = ask;
     this.volume = volume;
-    this.open = open;
     this.high = high;
     this.low = low;
-    this.close = close;
   }
   
   @Override
@@ -35,12 +37,13 @@ public class Ticker {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((this.timestamp== null) ? 0 : this.timestamp.hashCode());
-    result = prime * result + (int) (Double.doubleToLongBits(this.volume) ^ (Double.doubleToLongBits(this.volume) >>> 32));
-    result = prime * result + (int) (Double.doubleToLongBits(this.open) ^ (Double.doubleToLongBits(this.open) >>> 32));
-    result = prime * result + (int) (Double.doubleToLongBits(this.high) ^ (Double.doubleToLongBits(this.high) >>> 32));
-    result = prime * result + (int) (Double.doubleToLongBits(this.low) ^ (Double.doubleToLongBits(this.low) >>> 32));
-    result = prime * result + (int) (Double.doubleToLongBits(this.close) ^ (Double.doubleToLongBits(this.close) >>> 32));
+    result = prime * result + ((this.time== null) ? 0 : this.time.hashCode());
+    result = prime * result + ((this.price== null) ? 0 : this.price.hashCode());
+    result = prime * result + ((this.bid== null) ? 0 : this.bid.hashCode());
+    result = prime * result + ((this.ask== null) ? 0 : this.ask.hashCode());
+    result = prime * result + ((this.volume== null) ? 0 : this.volume.hashCode());
+    result = prime * result + ((this.high== null) ? 0 : this.high.hashCode());
+    result = prime * result + ((this.low== null) ? 0 : this.low.hashCode());
     return result;
   }
   
@@ -54,21 +57,41 @@ public class Ticker {
     if (getClass() != obj.getClass())
       return false;
     Ticker other = (Ticker) obj;
-    if (this.timestamp == null) {
-      if (other.timestamp != null)
+    if (this.time == null) {
+      if (other.time != null)
         return false;
-    } else if (!this.timestamp.equals(other.timestamp))
+    } else if (!this.time.equals(other.time))
       return false;
-    if (Double.doubleToLongBits(other.volume) != Double.doubleToLongBits(this.volume))
-      return false; 
-    if (Double.doubleToLongBits(other.open) != Double.doubleToLongBits(this.open))
-      return false; 
-    if (Double.doubleToLongBits(other.high) != Double.doubleToLongBits(this.high))
-      return false; 
-    if (Double.doubleToLongBits(other.low) != Double.doubleToLongBits(this.low))
-      return false; 
-    if (Double.doubleToLongBits(other.close) != Double.doubleToLongBits(this.close))
-      return false; 
+    if (this.price == null) {
+      if (other.price != null)
+        return false;
+    } else if (!this.price.equals(other.price))
+      return false;
+    if (this.bid == null) {
+      if (other.bid != null)
+        return false;
+    } else if (!this.bid.equals(other.bid))
+      return false;
+    if (this.ask == null) {
+      if (other.ask != null)
+        return false;
+    } else if (!this.ask.equals(other.ask))
+      return false;
+    if (this.volume == null) {
+      if (other.volume != null)
+        return false;
+    } else if (!this.volume.equals(other.volume))
+      return false;
+    if (this.high == null) {
+      if (other.high != null)
+        return false;
+    } else if (!this.high.equals(other.high))
+      return false;
+    if (this.low == null) {
+      if (other.low != null)
+        return false;
+    } else if (!this.low.equals(other.low))
+      return false;
     return true;
   }
   
@@ -76,42 +99,48 @@ public class Ticker {
   @Pure
   public String toString() {
     ToStringBuilder b = new ToStringBuilder(this);
-    b.add("timestamp", this.timestamp);
+    b.add("time", this.time);
+    b.add("price", this.price);
+    b.add("bid", this.bid);
+    b.add("ask", this.ask);
     b.add("volume", this.volume);
-    b.add("open", this.open);
     b.add("high", this.high);
     b.add("low", this.low);
-    b.add("close", this.close);
     return b.toString();
   }
   
   @Pure
-  public LocalDateTime getTimestamp() {
-    return this.timestamp;
+  public LocalDateTime getTime() {
+    return this.time;
   }
   
   @Pure
-  public double getVolume() {
+  public Double getPrice() {
+    return this.price;
+  }
+  
+  @Pure
+  public Double getBid() {
+    return this.bid;
+  }
+  
+  @Pure
+  public Double getAsk() {
+    return this.ask;
+  }
+  
+  @Pure
+  public Double getVolume() {
     return this.volume;
   }
   
   @Pure
-  public double getOpen() {
-    return this.open;
-  }
-  
-  @Pure
-  public double getHigh() {
+  public Double getHigh() {
     return this.high;
   }
   
   @Pure
-  public double getLow() {
+  public Double getLow() {
     return this.low;
-  }
-  
-  @Pure
-  public double getClose() {
-    return this.close;
   }
 }
