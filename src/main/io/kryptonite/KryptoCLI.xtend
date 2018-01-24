@@ -141,6 +141,7 @@ class KryptoCLI {
         ex.printStackTrace
       else
         println('''ERROR -> «ex.class.name»: «ex.message»''')
+      System.exit(-1)
     }
   }
   

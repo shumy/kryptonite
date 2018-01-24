@@ -13,6 +13,7 @@ import java.util.List
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.Collections
 
 class Exchanger {
   package val IAdapter adapter
@@ -90,12 +91,19 @@ class Exchanger {
       "sort" -> "1"
     })
     
+    if (res1 === null || res1.empty)
+      return Collections.EMPTY_LIST
+    
     val newStartMillis = res1.last.get(0).asLong + 60000
     val res2 = adapter.get('''/candles/trade:1m:t«pair»/hist''', #{
       "limit" -> "440",
       "start" -> ""+newStartMillis,
       "sort" -> "1"
     })
+    
+    if (res2 === null || res2.empty)
+      return Collections.EMPTY_LIST
+    
     
     val res = new LinkedList<JsonNode> => [
       addAll(res1)

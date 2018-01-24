@@ -129,7 +129,7 @@ class Bitfinex implements IAdapter {
       return null
     }
     
-    logger.info("GET-RESUTL: {}", txtRes)
+    logger.info("GET-RESULT: {}", txtRes)
     return mapper.readTree(txtRes)
   }
 }

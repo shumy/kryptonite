@@ -23,7 +23,7 @@ class ModelService {
   val db = new NeoDB("data", false)
   
   new () {
-    db.cypher('''CREATE INDEX ON :«Candle.simpleName»(stamp)''')
+    db.cypher('''CREATE INDEX ON :«Candle.simpleName»(pair, stamp)''')
   }
   
   def saveCandles(String pair, List<Candle> candles) {

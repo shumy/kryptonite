@@ -132,6 +132,7 @@ public class KryptoCLI {
           _builder.append(_message);
           InputOutput.<String>println(_builder.toString());
         }
+        System.exit((-1));
       } else {
         throw Exceptions.sneakyThrow(_t_1);
       }
@@ -182,7 +183,7 @@ public class KryptoCLI {
             final List<Candle> candles = clt.getDayHistory(pair, from);
             final long saved = db.saveCandles(pair, candles);
             StringConcatenation _builder = new StringConcatenation();
-            _builder.append("COLLECTED-CANDLES: (pair=");
+            _builder.append("LOAD: (pair=");
             _builder.append(pair);
             _builder.append(", from=");
             _builder.append(from);
