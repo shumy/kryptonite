@@ -15,11 +15,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.eclipse.xtend2.lib.StringConcatenation;
 import org.eclipse.xtext.xbase.lib.Conversions;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 import org.eclipse.xtext.xbase.lib.InputOutput;
+import org.eclipse.xtext.xbase.lib.IteratorExtensions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -62,6 +64,10 @@ public class KryptoCLI {
         InputOutput.<String>println(db.cypher(cmd.query).resultAsString());
         return;
       }
+      if (cmd.summary) {
+        KryptoCLI.summary();
+        return;
+      }
       if ((cmd.load != null)) {
         Integer _elvis = null;
         if (cmd.size != null) {
@@ -71,13 +77,17 @@ public class KryptoCLI {
         }
         final Integer size = _elvis;
         final String[] split = cmd.load.split("\\|");
+        String _xifexpression = null;
         int _length = split.length;
-        boolean _tripleNotEquals = (_length != 2);
-        if (_tripleNotEquals) {
-          InputOutput.<String>println("--load arguments are not correct!");
-          return;
+        boolean _tripleEquals = (_length == 2);
+        if (_tripleEquals) {
+          _xifexpression = split[1];
+        } else {
+          _xifexpression = ("BTCUSD ETHUSD XRPUSD EOSUSD BCHUSD IOTAUSD NEOUSD LTCUSD ETCUSD XMRUSD DASHUSD OMGUSD BTGUSD ZECUSD SANUSD QTUMUSD QASHUSD TNBUSD ZRXUSD" + 
+            "ETPUSD SNPUSD YYWUSD DATAUSD MNAUSD FUNUSD EDOUSD GNTUSD BATUSD SPKUSD AVTUSD RRTUSD TRXUSD RCNUSD RLCUSD AIDUSD SNGUSD REPUSD ELFUSD");
         }
-        KryptoCLI.load(split[0], size, split[1]);
+        final String pairs = _xifexpression;
+        KryptoCLI.load(split[0], size, pairs);
         return;
       }
       if ((cmd.get != null)) {
@@ -90,8 +100,8 @@ public class KryptoCLI {
         final Integer size_1 = _elvis_1;
         final String[] split_1 = cmd.get.split("\\|");
         int _length_1 = split_1.length;
-        boolean _tripleNotEquals_1 = (_length_1 != 2);
-        if (_tripleNotEquals_1) {
+        boolean _tripleNotEquals = (_length_1 != 2);
+        if (_tripleNotEquals) {
           InputOutput.<String>println("--get arguments are not correct!");
           return;
         }
@@ -126,6 +136,36 @@ public class KryptoCLI {
         throw Exceptions.sneakyThrow(_t_1);
       }
     }
+  }
+  
+  public static void summary() {
+    final NeoDB db = new NeoDB("data");
+    StringConcatenation _builder = new StringConcatenation();
+    _builder.append("MATCH (c:Candle)");
+    _builder.newLine();
+    _builder.append("RETURN c.pair as pair, min(c.stamp) as min, max(c.stamp) as max");
+    _builder.newLine();
+    _builder.append("ORDER BY pair");
+    _builder.newLine();
+    final String query = _builder.toString();
+    final Consumer<Map<String, Object>> _function = (Map<String, Object> it) -> {
+      Object _get = it.get("min");
+      final LocalDateTime min = Candle.stampToDate(((Long) _get));
+      Object _get_1 = it.get("max");
+      final LocalDateTime max = Candle.stampToDate(((Long) _get_1));
+      StringConcatenation _builder_1 = new StringConcatenation();
+      Object _get_2 = it.get("pair");
+      _builder_1.append(_get_2);
+      _builder_1.append(": ");
+      String _format = min.format(KryptoCLI.formatter);
+      _builder_1.append(_format);
+      _builder_1.append(" TO ");
+      String _format_1 = max.format(KryptoCLI.formatter);
+      _builder_1.append(_format_1);
+      InputOutput.<String>println(_builder_1.toString());
+    };
+    IteratorExtensions.<Map<String, Object>>toList(db.cypher(query)).forEach(_function);
+    System.exit(0);
   }
   
   public static void load(final String start, final Integer size, final String pairs) {

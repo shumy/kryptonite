@@ -16,6 +16,8 @@ import java.io.FileWriter
 import java.nio.file.Paths
 import java.nio.file.Files
 
+import io.kryptonite.api.dto.Candle
+
 @Command(
   name = "kryptonite-cli", footer = "Copyright(c) 2017",
   description = "Kryptonite Helper"
@@ -34,13 +36,16 @@ class RCommand {
   public String query
   
   
+  @Option(names = #["--summary"], help = true, description = "Summary of the loaded candles.")
+  public boolean summary
+  
   @Option(names = #["--load"], help = true, description = "Load candles from the server for a set of pairs. Format: " + "<YYYY-MM-DD>|<PAIR> [...PAIRS]")
   public String load
   
   @Option(names = "--get", help = true, description = "Get candles from the database. Format: " + "<YYYY-MM-DD>|<PAIR>")
   public String get
   
-  @Option(names = "--size", help = true, description = "Number of days to collect.")
+  @Option(names = "--size", help = true, description = "Number of days to load, or lines to get.")
   public Integer size
   
   @Option(names = "--file", help = true, description = "CSV file to save candles.")
@@ -86,15 +91,19 @@ class KryptoCLI {
         return
       }
       
+      if (cmd.summary) {
+        summary
+        return
+      }
+      
       if (cmd.load !== null) {
         val size = cmd.size ?: 1
         val split = cmd.load.split("\\|")
-        if (split.length !== 2) {
-          println("--load arguments are not correct!")
-          return
-        }
+        val pairs = if (split.length === 2) split.get(1) else //load all USD pairs
+          'BTCUSD ETHUSD XRPUSD EOSUSD BCHUSD IOTAUSD NEOUSD LTCUSD ETCUSD XMRUSD DASHUSD OMGUSD BTGUSD ZECUSD SANUSD QTUMUSD QASHUSD TNBUSD ZRXUSD' +
+          'ETPUSD SNPUSD YYWUSD DATAUSD MNAUSD FUNUSD EDOUSD GNTUSD BATUSD SPKUSD AVTUSD RRTUSD TRXUSD RCNUSD RLCUSD AIDUSD SNGUSD REPUSD ELFUSD'
         
-        load(split.get(0), size, split.get(1))
+        load(split.get(0), size, pairs)
         return
       }
       
@@ -135,6 +144,24 @@ class KryptoCLI {
     }
   }
   
+  def static void summary() {
+    val db = new NeoDB("data")
+    
+    val query = '''
+      MATCH (c:Candle)
+      RETURN c.pair as pair, min(c.stamp) as min, max(c.stamp) as max
+      ORDER BY pair
+    '''
+    
+    db.cypher(query).toList.forEach[
+      val min = Candle.stampToDate(get("min") as Long)
+      val max = Candle.stampToDate(get("max") as Long)
+      println('''«get("pair")»: «min.format(formatter)» TO «max.format(formatter)»''')
+    ]
+    
+    System.exit(0)
+  }
+  
   def static void load(String start, Integer size, String pairs) {
     val date = LocalDate.parse(start, formatter)
     
@@ -147,7 +174,7 @@ class KryptoCLI {
         val from = date.plusDays(i).format(formatter)
         val candles = clt.getDayHistory(pair, from)
         val saved = db.saveCandles(pair, candles)
-        println('''COLLECTED-CANDLES: (pair=«pair», from=«from», saved=«saved»)''')
+        println('''LOAD: (pair=«pair», from=«from», saved=«saved»)''')
         Thread.sleep(10_000) //don't exceed the rate limit...
       }
     }

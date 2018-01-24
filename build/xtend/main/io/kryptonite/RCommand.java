@@ -17,13 +17,16 @@ public class RCommand {
   @CommandLine.Option(names = "--query", help = true, description = "Execute a Cypher query.")
   public String query;
   
+  @CommandLine.Option(names = { "--summary" }, help = true, description = "Summary of the loaded candles.")
+  public boolean summary;
+  
   @CommandLine.Option(names = { "--load" }, help = true, description = ("Load candles from the server for a set of pairs. Format: " + "<YYYY-MM-DD>|<PAIR> [...PAIRS]"))
   public String load;
   
   @CommandLine.Option(names = "--get", help = true, description = ("Get candles from the database. Format: " + "<YYYY-MM-DD>|<PAIR>"))
   public String get;
   
-  @CommandLine.Option(names = "--size", help = true, description = "Number of days to collect.")
+  @CommandLine.Option(names = "--size", help = true, description = "Number of days to load, or lines to get.")
   public Integer size;
   
   @CommandLine.Option(names = "--file", help = true, description = "CSV file to save candles.")

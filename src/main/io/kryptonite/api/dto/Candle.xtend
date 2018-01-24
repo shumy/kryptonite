@@ -16,7 +16,7 @@ class Candle {
   
   public val Double volume            //Quantity of symbol traded within the timeframe
   
-  def getTimestamp() { Instant.ofEpochMilli(stamp * 1000).atZone(ZoneId.systemDefault).toLocalDateTime }
+  def getTimestamp() { stampToDate(stamp) }
   
   new (LocalDateTime timestamp, Double open, Double close, Double high, Double low, Double volume) {
     this.stamp = timestamp.atZone(ZoneId.systemDefault).toInstant.toEpochMilli / 1000
@@ -65,6 +65,10 @@ class Candle {
       obj.get("low") as Double,
       obj.get("volume") as Double
     )
+  }
+  
+  static def stampToDate(Long stamp) {
+    Instant.ofEpochMilli(stamp * 1000).atZone(ZoneId.systemDefault).toLocalDateTime
   }
   
   override toString()
