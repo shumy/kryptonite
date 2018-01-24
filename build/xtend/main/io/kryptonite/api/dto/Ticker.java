@@ -1,14 +1,17 @@
 package io.kryptonite.api.dto;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import org.eclipse.xtend.lib.annotations.Data;
-import org.eclipse.xtext.xbase.lib.Pure;
-import org.eclipse.xtext.xbase.lib.util.ToStringBuilder;
+import java.time.ZoneId;
+import java.util.Collections;
+import java.util.Map;
+import org.eclipse.xtend2.lib.StringConcatenation;
+import org.eclipse.xtext.xbase.lib.CollectionLiterals;
+import org.eclipse.xtext.xbase.lib.Pair;
 
-@Data
 @SuppressWarnings("all")
 public class Ticker {
-  public final LocalDateTime time = LocalDateTime.now();
+  public final Long stamp;
   
   public final Double price;
   
@@ -16,131 +19,84 @@ public class Ticker {
   
   public final Double ask;
   
-  public final Double volume;
-  
   public final Double high;
   
   public final Double low;
   
-  public Ticker(final Double price, final Double bid, final Double ask, final Double volume, final Double high, final Double low) {
-    super();
+  public final Double volume;
+  
+  public LocalDateTime getTimestamp() {
+    return Instant.ofEpochMilli((this.stamp).longValue()).atZone(ZoneId.systemDefault()).toLocalDateTime();
+  }
+  
+  public Ticker(final LocalDateTime timestamp, final Double price, final Double bid, final Double ask, final Double high, final Double low, final Double volume) {
+    this.stamp = Long.valueOf(timestamp.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
     this.price = price;
     this.bid = bid;
     this.ask = ask;
-    this.volume = volume;
     this.high = high;
     this.low = low;
+    this.volume = volume;
+  }
+  
+  public Ticker(final Long millis, final Double price, final Double bid, final Double ask, final Double high, final Double low, final Double volume) {
+    this.stamp = millis;
+    this.price = price;
+    this.bid = bid;
+    this.ask = ask;
+    this.high = high;
+    this.low = low;
+    this.volume = volume;
+  }
+  
+  public Map<String, Object> toMap() {
+    Pair<String, Long> _mappedTo = Pair.<String, Long>of("stamp", this.stamp);
+    Pair<String, Double> _mappedTo_1 = Pair.<String, Double>of("price", this.price);
+    Pair<String, Double> _mappedTo_2 = Pair.<String, Double>of("bid", this.bid);
+    Pair<String, Double> _mappedTo_3 = Pair.<String, Double>of("ask", this.ask);
+    Pair<String, Double> _mappedTo_4 = Pair.<String, Double>of("high", this.high);
+    Pair<String, Double> _mappedTo_5 = Pair.<String, Double>of("low", this.low);
+    Pair<String, Double> _mappedTo_6 = Pair.<String, Double>of("volume", this.volume);
+    return Collections.<String, Object>unmodifiableMap(CollectionLiterals.<String, Object>newHashMap(_mappedTo, _mappedTo_1, _mappedTo_2, _mappedTo_3, _mappedTo_4, _mappedTo_5, _mappedTo_6));
+  }
+  
+  public static Ticker fromMap(final Map<String, Object> obj) {
+    Object _get = obj.get("stamp");
+    Object _get_1 = obj.get("price");
+    Object _get_2 = obj.get("bid");
+    Object _get_3 = obj.get("ask");
+    Object _get_4 = obj.get("high");
+    Object _get_5 = obj.get("low");
+    Object _get_6 = obj.get("volume");
+    return new Ticker(
+      ((Long) _get), 
+      ((Double) _get_1), 
+      ((Double) _get_2), 
+      ((Double) _get_3), 
+      ((Double) _get_4), 
+      ((Double) _get_5), 
+      ((Double) _get_6));
   }
   
   @Override
-  @Pure
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((this.time== null) ? 0 : this.time.hashCode());
-    result = prime * result + ((this.price== null) ? 0 : this.price.hashCode());
-    result = prime * result + ((this.bid== null) ? 0 : this.bid.hashCode());
-    result = prime * result + ((this.ask== null) ? 0 : this.ask.hashCode());
-    result = prime * result + ((this.volume== null) ? 0 : this.volume.hashCode());
-    result = prime * result + ((this.high== null) ? 0 : this.high.hashCode());
-    result = prime * result + ((this.low== null) ? 0 : this.low.hashCode());
-    return result;
-  }
-  
-  @Override
-  @Pure
-  public boolean equals(final Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    Ticker other = (Ticker) obj;
-    if (this.time == null) {
-      if (other.time != null)
-        return false;
-    } else if (!this.time.equals(other.time))
-      return false;
-    if (this.price == null) {
-      if (other.price != null)
-        return false;
-    } else if (!this.price.equals(other.price))
-      return false;
-    if (this.bid == null) {
-      if (other.bid != null)
-        return false;
-    } else if (!this.bid.equals(other.bid))
-      return false;
-    if (this.ask == null) {
-      if (other.ask != null)
-        return false;
-    } else if (!this.ask.equals(other.ask))
-      return false;
-    if (this.volume == null) {
-      if (other.volume != null)
-        return false;
-    } else if (!this.volume.equals(other.volume))
-      return false;
-    if (this.high == null) {
-      if (other.high != null)
-        return false;
-    } else if (!this.high.equals(other.high))
-      return false;
-    if (this.low == null) {
-      if (other.low != null)
-        return false;
-    } else if (!this.low.equals(other.low))
-      return false;
-    return true;
-  }
-  
-  @Override
-  @Pure
   public String toString() {
-    ToStringBuilder b = new ToStringBuilder(this);
-    b.add("time", this.time);
-    b.add("price", this.price);
-    b.add("bid", this.bid);
-    b.add("ask", this.ask);
-    b.add("volume", this.volume);
-    b.add("high", this.high);
-    b.add("low", this.low);
-    return b.toString();
-  }
-  
-  @Pure
-  public LocalDateTime getTime() {
-    return this.time;
-  }
-  
-  @Pure
-  public Double getPrice() {
-    return this.price;
-  }
-  
-  @Pure
-  public Double getBid() {
-    return this.bid;
-  }
-  
-  @Pure
-  public Double getAsk() {
-    return this.ask;
-  }
-  
-  @Pure
-  public Double getVolume() {
-    return this.volume;
-  }
-  
-  @Pure
-  public Double getHigh() {
-    return this.high;
-  }
-  
-  @Pure
-  public Double getLow() {
-    return this.low;
+    StringConcatenation _builder = new StringConcatenation();
+    _builder.append("TICKER (ts=");
+    LocalDateTime _timestamp = this.getTimestamp();
+    _builder.append(_timestamp);
+    _builder.append(", price=");
+    _builder.append(this.price);
+    _builder.append(", bid=");
+    _builder.append(this.bid);
+    _builder.append(", ask=");
+    _builder.append(this.ask);
+    _builder.append(", high=");
+    _builder.append(this.high);
+    _builder.append(", low=");
+    _builder.append(this.low);
+    _builder.append(", vol=");
+    _builder.append(this.volume);
+    _builder.append(")");
+    return _builder.toString();
   }
 }

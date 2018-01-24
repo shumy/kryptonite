@@ -1,12 +1,10 @@
 package io.kryptonite.trader
 
-import io.kryptonite.Wallet
 import io.kryptonite.api.Exchanger
 import io.kryptonite.api.dto.Ticker
 import java.time.temporal.ChronoUnit
 
 class SimulationTrader implements ITrader {
-  val Wallet wallet
   val Exchanger clt
   
   var Ticker last = null
@@ -26,8 +24,7 @@ class SimulationTrader implements ITrader {
   
   var double balance
   
-  new(Wallet wallet, Exchanger clt, double balance) {
-    this.wallet = wallet
+  new(Exchanger clt, double balance) {
     this.clt = clt
     this.balance = balance
     
@@ -35,12 +32,12 @@ class SimulationTrader implements ITrader {
       println("Subscribed to XRPUSD")
       onMessage[
         if (last === null) {
-          wallet.log('''INIT-PRICE: «price»''')
+          println('''INIT-PRICE: «price»''')
           last = it
           return
         }
         
-        val deltaTime = last.time.until(time, ChronoUnit.SECONDS)
+        val deltaTime = last.timestamp.until(timestamp, ChronoUnit.SECONDS)
         if (deltaTime === 0) return;
         
         process(it, deltaTime)
@@ -62,8 +59,8 @@ class SimulationTrader implements ITrader {
     momentum += Math.abs(dp_dt * 10)
     momentum /= deltaTime
     
-    wallet.log('''TICK: (time=«current.time», dt=«deltaTime»s, dp=«deltaPrice»%, stop=«stop») -> «current.price»''')
-    wallet.log('''  (dp/dt=«dp_dt», acum=«acum», mom=«momentum»)''')
+    println('''TICK: (time=«current.timestamp», dt=«deltaTime»s, dp=«deltaPrice»%, stop=«stop») -> «current.price»''')
+    println('''  (dp/dt=«dp_dt», acum=«acum», mom=«momentum»)''')
     
     if (acum < -2 || acum > 6)
       sell(current.price)
@@ -79,7 +76,7 @@ class SimulationTrader implements ITrader {
       //  sell(current.price)
       
       val wallDp = 100 * current.price/wallPrice - 100
-      wallet.log('''  WALL-«IF acum >0»UP«ELSE»DOWN«ENDIF» (last=«wallPrice», current=«current.price», dp=«wallDp»%)''')
+      println('''  WALL-«IF acum >0»UP«ELSE»DOWN«ENDIF» (last=«wallPrice», current=«current.price», dp=«wallDp»%)''')
       
       wallPrice = current.price
       if (!in)
@@ -111,7 +108,7 @@ class SimulationTrader implements ITrader {
       
       atPrice = price
       stop = trail
-      wallet.log('''  BUY (price=«atPrice», stop=«stop»)''')
+      println('''  BUY (price=«atPrice», stop=«stop»)''')
     }
   }
   
@@ -122,7 +119,7 @@ class SimulationTrader implements ITrader {
       
       val perc = (price/atPrice)
       balance *= perc
-      wallet.log('''  SELL (buy=«atPrice», sell=«price», perc=«perc - 1», balance=«balance»)''')
+      println('''  SELL (buy=«atPrice», sell=«price», perc=«perc - 1», balance=«balance»)''')
     }
   }
 }

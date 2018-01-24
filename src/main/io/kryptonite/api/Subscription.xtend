@@ -21,13 +21,16 @@ class Subscription<DTO> {
   //processors...
   val (ArrayNode)=>DTO parseTicker = [
     new Ticker(
+      LocalDateTime.now,
+      
       get(6).asDouble,
       get(0).asDouble,
       get(2).asDouble,
       
-      get(7).asDouble,
       get(8).asDouble,
-      get(9).asDouble
+      get(9).asDouble,
+      
+      get(7).asDouble
     ) as DTO
   ]
   
@@ -66,7 +69,7 @@ class Subscription<DTO> {
     }
     
     val dto = processor.apply(msg)
-    if (type === Candle && (dto as Candle).time < (lastDto as Candle).time)
+    if (type === Candle && (dto as Candle).timestamp < (lastDto as Candle).timestamp)
       return;
     
     lastDto = dto

@@ -2,16 +2,16 @@ package io.kryptonite
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
+import io.kryptonite.adapter.Bitfinex
+import io.kryptonite.api.Exchanger
+import io.kryptonite.db.ModelService
+import io.kryptonite.db.NeoDB
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import org.slf4j.LoggerFactory
 import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
-import javafx.application.Application
-
-import io.kryptonite.adapter.Bitfinex
-import io.kryptonite.api.Exchanger
-import io.kryptonite.trader.SimulationTrader
-import io.kryptonite.api.dto.Candle
 
 @Command(
   name = "kryptonite-cli", footer = "Copyright(c) 2017",
@@ -24,11 +24,20 @@ class RCommand {
   @Option(names = #["--stack"], help = true, description = "Display the stack trace error if any.")
   public boolean stack
   
+  @Option(names = #["--log"], help = true, description = "Display info logs.")
+  public boolean log
+  
+  @Option(names = "--query", help = true, description = "Execute a Cypher query.")
+  public String query
+  
+  @Option(names = #["--collect"], help = true, description = "Collect history from a set of pairs.")
+  public String collect
+  
+  @Option(names = "--size", help = true, description = "Number of days to collect.")
+  public Integer size
+  
   @Option(names = #["--test"], help = true, description = "Test the streaming API.")
   public boolean test
-  
-  //@Parameters(index = "0", description = "Execute a Cypher query.")
-  //public String query
   
   //@Option(names = #["--server"], help = true, description = "Run the HTTP server.")
   //public boolean server
@@ -39,7 +48,7 @@ class RCommand {
 
 
 class KryptoCLI {
-  //static val logger = LoggerFactory.getLogger(KryptoCLI)
+  static val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
   
   def static void main(String[] args) {
     val cmd =  try {
@@ -49,9 +58,33 @@ class KryptoCLI {
       return
     }
     
+    val logger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger
+    if (cmd.log)
+      logger.level = Level.INFO
+    else
+      logger.level = Level.ERROR
+    
     try {
       if (cmd.help) {
         CommandLine.usage(new RCommand, System.out)
+        return
+      }
+      
+      if (cmd.query !== null) {
+        val db = new NeoDB("data")
+        println(db.cypher(cmd.query).resultAsString)
+        return
+      }
+      
+      if (cmd.collect !== null) {
+        val size = cmd.size ?: 1
+        val split = cmd.collect.split("\\|")
+        if (split.length !== 2) {
+          println("--collect arguments are not correct!")
+          return
+        }
+        
+        collect(split.get(0), size, split.get(1))
         return
       }
       
@@ -63,14 +96,6 @@ class KryptoCLI {
       /*if (cmd.server) {
         HTTPServer.start
         return
-      }
-      
-      if (cmd.path !== null)
-        loadFiles(cmd.path)
-      
-      if (cmd.query !== null) {
-        val db = new NeoDB("data/viu")
-        println(db.cypher(cmd.query).resultAsString)
       }*/
       
     } catch (Throwable ex) {
@@ -81,20 +106,38 @@ class KryptoCLI {
     }
   }
   
-  def static void test() {
-    //println("Searching JavaFX at: " + System.getProperty("java.home"))
+  def static void collect(String start, Integer size, String pairs) {
+    val date = LocalDate.parse(start, formatter)
     
-    LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger => [
-      level = Level.ERROR
-    ]
-    
-    //Application.launch(Wallet)
+    val db = new ModelService
     val clt = new Exchanger(new Bitfinex)
+    
+    val pairsList = pairs.split(" ")
+    for (pair : pairsList) {
+      for (var i = 0; i < size; i++) {
+        val from = date.plusDays(i).format(formatter)
+        val candles = clt.getDayHistory(pair, from)
+        val saved = db.saveCandles(pair, candles)
+        println('''COLLECTED-CANDLES: (pair=«pair», from=«from», saved=«saved»)''')
+        Thread.sleep(10_000) //don't exceed the rate limit...
+      }
+    }
+    System.exit(0)
+  }
+  
+  def static void test() {
+    val clt = new Exchanger(new Bitfinex)
+    val res = clt.getDayHistory("2018-01-01", "XRPUSD")
+    
+    for (var i = 0; i < res.length; i++)
+      println(i+ ": " + res.get(i))
+    
+    /*val clt = new Exchanger(new Bitfinex)
     clt.subscribe(Candle, "1m:tXRPUSD").then[
       println("Subscribed to XRPUSD 1m candles...")
       onMessage[
         println(it)
       ]
-    ]
+    ]*/
   }
 }

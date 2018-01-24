@@ -6,6 +6,10 @@ import io.kryptonite.adapter.IAdapter
 import io.kryptonite.api.async.Promise
 import io.kryptonite.api.dto.Candle
 import io.kryptonite.api.dto.Ticker
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.LinkedList
+import java.util.List
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -69,5 +73,47 @@ class Exchanger {
         case Candle: adapter.send(#{ "event" -> "subscribe", "channel" -> "candles", "key" -> "trade:" + symbol })
       }
     ]
+  }
+  
+  def List<Candle> getDayHistory(String pair, String date) {
+    val split = date.split("-")
+    val year = Integer.parseInt(split.get(0))
+    val month = Integer.parseInt(split.get(1))
+    val day = Integer.parseInt(split.get(2))
+    
+    val start = LocalDateTime.of(year, month, day, 0, 0, 0)
+    val startMillis = start.atZone(ZoneId.systemDefault).toInstant.toEpochMilli
+    
+    val res1 = adapter.get('''/candles/trade:1m:t«pair»/hist''', #{
+      "limit" -> "1000",
+      "start" -> ""+startMillis,
+      "sort" -> "1"
+    })
+    
+    val newStartMillis = res1.last.get(0).asLong + 60000
+    val res2 = adapter.get('''/candles/trade:1m:t«pair»/hist''', #{
+      "limit" -> "440",
+      "start" -> ""+newStartMillis,
+      "sort" -> "1"
+    })
+    
+    val res = new LinkedList<JsonNode> => [
+      addAll(res1)
+      addAll(res2)
+    ]
+    
+    return res.map[
+      new Candle(
+        get(0).asLong,
+        
+        get(1).asDouble,
+        get(2).asDouble,
+        
+        get(3).asDouble,
+        get(4).asDouble,
+        
+        get(5).asDouble
+      )
+    ].toList
   }
 }

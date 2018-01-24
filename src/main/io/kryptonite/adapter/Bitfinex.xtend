@@ -7,19 +7,23 @@ import java.util.Map
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import org.slf4j.LoggerFactory
+import okhttp3.OkHttpClient
+import okhttp3.Request
 
 class Bitfinex implements IAdapter {
   static val logger = LoggerFactory.getLogger(Bitfinex)
   
   val mapper = new ObjectMapper
-  val url = new URI("wss://api.bitfinex.com/ws/2")
+  val httpURL = "https://api.bitfinex.com/v2"
+  val wsURL = new URI("wss://api.bitfinex.com/ws/2")
   
+  val clt = new OkHttpClient
   val WebSocketClient ws
   
   var (JsonNode)=>void onMessage = null
   
   new() {
-    ws = new WebSocketClient(url) {
+    ws = new WebSocketClient(wsURL) {
       override onOpen(ServerHandshake handshakedata) {
         logger.info("OPEN: {}", handshakedata.httpStatus)
         send(#{ "event" -> "conf", "flags" -> 32 }) //Enable all times as date strings.
@@ -86,13 +90,13 @@ class Bitfinex implements IAdapter {
   private def boolean processConf(JsonNode msg) {
     val statusNode = msg.get("status")
     if (statusNode === null || statusNode.asText != "OK") {
-      println("ERROR: Configuration status not OK!")
+      logger.error("Configuration status not OK!")
       System.exit(-1)
     }
     
     return true
   }
-  
+    
   override send(JsonNode msg) {
     val txtMsg = mapper.writeValueAsString(msg)
     logger.info("SEND: {}", txtMsg)
@@ -107,5 +111,25 @@ class Bitfinex implements IAdapter {
   
   override onMessage((JsonNode)=>void onMessage) {
     this.onMessage = onMessage
+  }
+  
+  override get(String uri) { get(uri, null) }
+  
+  override get(String uri, Map<String, String> params) {
+    val txtParams = if (params === null || params.empty) "" else '''?«FOR key: params.keySet SEPARATOR '&'»«key»=«params.get(key)»«ENDFOR»'''
+    val url = '''«httpURL»«IF !uri.startsWith("/")»/«ENDIF»«uri»«txtParams»'''
+    
+    logger.info("GET: {}", url)
+    val req = new Request.Builder().url(url).build
+    
+    val res = clt.newCall(req).execute
+    val txtRes = res.body.string
+    if (res.code !== 200) {
+      logger.error("GET-ERROR: {} {}", res.code, txtRes)
+      return null
+    }
+    
+    logger.info("GET-RESUTL: {}", txtRes)
+    return mapper.readTree(txtRes)
   }
 }
