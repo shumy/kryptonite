@@ -64,8 +64,8 @@ class ModelService {
   static def calcRange(String start, Integer size) {
     val timeStr = if (start.split(" ").length === 1) start + " 00:00:00" else start
     val time = LocalDateTime.parse(timeStr, formatter)
-    val mStart = time.atZone(ZoneId.systemDefault).toInstant.toEpochMilli
-    val mEnd = mStart + 60000 * (size -1)
+    val mStart = time.atZone(ZoneId.systemDefault).toInstant.toEpochMilli / 1000
+    val mEnd = mStart + 60 * (size -1)
     
     return new Range(mStart, mEnd)
   }

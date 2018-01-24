@@ -104,7 +104,7 @@ class Exchanger {
     
     return res.map[
       new Candle(
-        get(0).asLong,
+        get(0).asLong / 1000,
         
         get(1).asDouble,
         get(2).asDouble,

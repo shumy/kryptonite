@@ -8,9 +8,14 @@ import io.kryptonite.api.dto.Candle;
 import io.kryptonite.db.ModelService;
 import io.kryptonite.db.NeoDB;
 import io.kryptonite.db.Range;
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.function.Consumer;
 import org.eclipse.xtend2.lib.StringConcatenation;
 import org.eclipse.xtext.xbase.lib.Conversions;
 import org.eclipse.xtext.xbase.lib.Exceptions;
@@ -80,7 +85,7 @@ public class KryptoCLI {
         if (cmd.size != null) {
           _elvis_1 = cmd.size;
         } else {
-          _elvis_1 = Integer.valueOf(1);
+          _elvis_1 = Integer.valueOf(1440);
         }
         final Integer size_1 = _elvis_1;
         final String[] split_1 = cmd.get.split("\\|");
@@ -90,8 +95,13 @@ public class KryptoCLI {
           InputOutput.<String>println("--get arguments are not correct!");
           return;
         }
-        KryptoCLI.get(split_1[0], size_1, split_1[1]);
-        return;
+        if ((cmd.file != null)) {
+          KryptoCLI.getToFile(split_1[0], size_1, split_1[1], cmd.file);
+          return;
+        } else {
+          KryptoCLI.get(split_1[0], size_1, split_1[1]);
+          return;
+        }
       }
       if (cmd.test) {
         KryptoCLI.test();
@@ -164,13 +174,51 @@ public class KryptoCLI {
     _builder.append(range.end);
     _builder.append(")");
     _builder.newLineIfNotEmpty();
-    _builder.append("RETURN c.open as open, c.close as close, c.high as high, c.low as low, c.volume as volume");
+    _builder.append("RETURN c.stamp as stamp, c.open as open, c.close as close, c.high as high, c.low as low, c.volume as volume");
     _builder.newLine();
-    _builder.append("ORDER BY c.stamp");
+    _builder.append("ORDER BY stamp");
     _builder.newLine();
     final String query = _builder.toString();
     InputOutput.<String>println(db.cypher(query).resultAsString());
     System.exit(0);
+  }
+  
+  public static void getToFile(final String start, final Integer size, final String pair, final String file) {
+    try {
+      Files.deleteIfExists(Paths.get(file));
+      final FileWriter writer = new FileWriter(file);
+      writer.append("stamp,ts,open,close,high,low,volume\n");
+      final ModelService db = new ModelService();
+      final Consumer<Candle> _function = (Candle it) -> {
+        try {
+          StringConcatenation _builder = new StringConcatenation();
+          _builder.append(it.stamp);
+          _builder.append(",");
+          LocalDateTime _timestamp = it.getTimestamp();
+          _builder.append(_timestamp);
+          _builder.append(",");
+          _builder.append(it.open);
+          _builder.append(",");
+          _builder.append(it.close);
+          _builder.append(",");
+          _builder.append(it.high);
+          _builder.append(",");
+          _builder.append(it.low);
+          _builder.append(",");
+          _builder.append(it.volume);
+          writer.append(_builder);
+          writer.append("\n");
+        } catch (Throwable _e) {
+          throw Exceptions.sneakyThrow(_e);
+        }
+      };
+      db.getCandles(pair, start, size).forEach(_function);
+      writer.flush();
+      writer.close();
+      System.exit(0);
+    } catch (Throwable _e) {
+      throw Exceptions.sneakyThrow(_e);
+    }
   }
   
   public static void test() {

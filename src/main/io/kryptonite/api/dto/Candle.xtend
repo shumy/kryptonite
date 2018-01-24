@@ -16,10 +16,10 @@ class Candle {
   
   public val Double volume            //Quantity of symbol traded within the timeframe
   
-  def getTimestamp() { Instant.ofEpochMilli(stamp).atZone(ZoneId.systemDefault).toLocalDateTime }
+  def getTimestamp() { Instant.ofEpochMilli(stamp * 1000).atZone(ZoneId.systemDefault).toLocalDateTime }
   
   new (LocalDateTime timestamp, Double open, Double close, Double high, Double low, Double volume) {
-    this.stamp = timestamp.atZone(ZoneId.systemDefault).toInstant.toEpochMilli
+    this.stamp = timestamp.atZone(ZoneId.systemDefault).toInstant.toEpochMilli / 1000
     
     this.open = open
     this.close = close

@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory
 import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
+import java.io.FileWriter
+import java.nio.file.Paths
+import java.nio.file.Files
 
 @Command(
   name = "kryptonite-cli", footer = "Copyright(c) 2017",
@@ -31,16 +34,17 @@ class RCommand {
   public String query
   
   
-  @Option(names = #["--load"], help = true, description = "Load history from a set of pairs.\n Format: " + "<YYYY-MM-DD>|<PAIR> [...PAIRS]")
+  @Option(names = #["--load"], help = true, description = "Load candles from the server for a set of pairs. Format: " + "<YYYY-MM-DD>|<PAIR> [...PAIRS]")
   public String load
   
-  @Option(names = "--get", help = true, description = "Get candles from the database.\n Format: " + "<YYYY-MM-DD>|<PAIR> [...PAIRS]")
+  @Option(names = "--get", help = true, description = "Get candles from the database. Format: " + "<YYYY-MM-DD>|<PAIR>")
   public String get
   
   @Option(names = "--size", help = true, description = "Number of days to collect.")
   public Integer size
   
-  
+  @Option(names = "--file", help = true, description = "CSV file to save candles.")
+  public String file
   
   @Option(names = #["--test"], help = true, description = "Test the streaming API.")
   public boolean test
@@ -95,15 +99,22 @@ class KryptoCLI {
       }
       
       if (cmd.get !== null) {
-        val size = cmd.size ?: 1
+        val size = cmd.size ?: 1440
         val split = cmd.get.split("\\|")
         if (split.length !== 2) {
           println("--get arguments are not correct!")
           return
         }
         
-        get(split.get(0), size, split.get(1))
-        return
+        if (cmd.file !== null) {
+          //save to file
+          getToFile(split.get(0), size, split.get(1), cmd.file)
+          return
+        } else {
+          //show in table
+          get(split.get(0), size, split.get(1))
+          return
+        }
       }
       
       if (cmd.test) {
@@ -150,13 +161,31 @@ class KryptoCLI {
     val query = '''
       MATCH (c:Candle { pair:"«pair»" })
       WHERE c.stamp IN range(«range.start», «range.end»)
-      RETURN c.open as open, c.close as close, c.high as high, c.low as low, c.volume as volume
-      ORDER BY c.stamp
+      RETURN c.stamp as stamp, c.open as open, c.close as close, c.high as high, c.low as low, c.volume as volume
+      ORDER BY stamp
     '''
     
     println(db.cypher(query).resultAsString)
     System.exit(0)
   }
+  
+  def static void getToFile(String start, Integer size, String pair, String file) {
+    Files.deleteIfExists(Paths.get(file))
+    
+    val writer = new FileWriter(file)
+    writer.append("stamp,ts,open,close,high,low,volume\n")
+    
+    val db = new ModelService
+    db.getCandles(pair, start, size).forEach[
+      writer.append('''«stamp»,«timestamp»,«open»,«close»,«high»,«low»,«volume»''')
+      writer.append("\n")
+    ]
+    
+    writer.flush
+    writer.close
+    System.exit(0)
+  }
+  
   
   def static void test() {
     val clt = new Exchanger(new Bitfinex)
