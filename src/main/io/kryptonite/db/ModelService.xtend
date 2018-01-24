@@ -6,6 +6,13 @@ import org.slf4j.LoggerFactory
 import java.time.ZoneId
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.eclipse.xtend.lib.annotations.Data
+
+@Data
+class Range {
+  public val long start
+  public val long end
+}
 
 class ModelService {
   static val logger = LoggerFactory.getLogger(ModelService)
@@ -41,14 +48,11 @@ class ModelService {
   }
   
   def List<Candle> getCandles(String pair, String start, Integer size) {
-    val startSrt = if (start.split(" ").length === 1) start + " 00:00:00" else start
-    
-    val mStart = timeToMillis(startSrt)
-    val mEnd = mStart + 60000 * (size -1)
+    val range = calcRange(start, size)
     
     val res = db.cypher('''
       MATCH (c:«Candle.simpleName» { pair: "«pair»" })
-      WHERE c.stamp IN range(«mStart», «mEnd»)
+      WHERE c.stamp IN range(«range.start», «range.end»)
       RETURN c.stamp as stamp, c.open as open, c.close as close, c.high as high, c.low as low, c.volume as volume
       ORDER BY stamp
     ''').toList
@@ -57,8 +61,12 @@ class ModelService {
     return res.map[ Candle.fromMap(it) ]
   }
   
-  private def timeToMillis(String timeStr) {
+  static def calcRange(String start, Integer size) {
+    val timeStr = if (start.split(" ").length === 1) start + " 00:00:00" else start
     val time = LocalDateTime.parse(timeStr, formatter)
-    return time.atZone(ZoneId.systemDefault).toInstant.toEpochMilli
+    val mStart = time.atZone(ZoneId.systemDefault).toInstant.toEpochMilli
+    val mEnd = mStart + 60000 * (size -1)
+    
+    return new Range(mStart, mEnd)
   }
 }

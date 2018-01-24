@@ -30,11 +30,17 @@ class RCommand {
   @Option(names = "--query", help = true, description = "Execute a Cypher query.")
   public String query
   
-  @Option(names = #["--collect"], help = true, description = "Collect history from a set of pairs.")
-  public String collect
+  
+  @Option(names = #["--load"], help = true, description = "Load history from a set of pairs.\n Format: " + "<YYYY-MM-DD>|<PAIR> [...PAIRS]")
+  public String load
+  
+  @Option(names = "--get", help = true, description = "Get candles from the database.\n Format: " + "<YYYY-MM-DD>|<PAIR> [...PAIRS]")
+  public String get
   
   @Option(names = "--size", help = true, description = "Number of days to collect.")
   public Integer size
+  
+  
   
   @Option(names = #["--test"], help = true, description = "Test the streaming API.")
   public boolean test
@@ -76,15 +82,27 @@ class KryptoCLI {
         return
       }
       
-      if (cmd.collect !== null) {
+      if (cmd.load !== null) {
         val size = cmd.size ?: 1
-        val split = cmd.collect.split("\\|")
+        val split = cmd.load.split("\\|")
         if (split.length !== 2) {
-          println("--collect arguments are not correct!")
+          println("--load arguments are not correct!")
           return
         }
         
-        collect(split.get(0), size, split.get(1))
+        load(split.get(0), size, split.get(1))
+        return
+      }
+      
+      if (cmd.get !== null) {
+        val size = cmd.size ?: 1
+        val split = cmd.get.split("\\|")
+        if (split.length !== 2) {
+          println("--get arguments are not correct!")
+          return
+        }
+        
+        get(split.get(0), size, split.get(1))
         return
       }
       
@@ -106,7 +124,7 @@ class KryptoCLI {
     }
   }
   
-  def static void collect(String start, Integer size, String pairs) {
+  def static void load(String start, Integer size, String pairs) {
     val date = LocalDate.parse(start, formatter)
     
     val db = new ModelService
@@ -122,6 +140,21 @@ class KryptoCLI {
         Thread.sleep(10_000) //don't exceed the rate limit...
       }
     }
+    System.exit(0)
+  }
+  
+  def static void get(String start, Integer size, String pair) {
+    val db = new NeoDB("data")
+    val range = ModelService.calcRange(start, size)
+    
+    val query = '''
+      MATCH (c:Candle { pair:"«pair»" })
+      WHERE c.stamp IN range(«range.start», «range.end»)
+      RETURN c.open as open, c.close as close, c.high as high, c.low as low, c.volume as volume
+      ORDER BY c.stamp
+    '''
+    
+    println(db.cypher(query).resultAsString)
     System.exit(0)
   }
   

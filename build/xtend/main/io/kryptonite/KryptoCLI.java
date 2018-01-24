@@ -7,6 +7,7 @@ import io.kryptonite.api.Exchanger;
 import io.kryptonite.api.dto.Candle;
 import io.kryptonite.db.ModelService;
 import io.kryptonite.db.NeoDB;
+import io.kryptonite.db.Range;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -56,7 +57,7 @@ public class KryptoCLI {
         InputOutput.<String>println(db.cypher(cmd.query).resultAsString());
         return;
       }
-      if ((cmd.collect != null)) {
+      if ((cmd.load != null)) {
         Integer _elvis = null;
         if (cmd.size != null) {
           _elvis = cmd.size;
@@ -64,14 +65,32 @@ public class KryptoCLI {
           _elvis = Integer.valueOf(1);
         }
         final Integer size = _elvis;
-        final String[] split = cmd.collect.split("\\|");
+        final String[] split = cmd.load.split("\\|");
         int _length = split.length;
         boolean _tripleNotEquals = (_length != 2);
         if (_tripleNotEquals) {
-          InputOutput.<String>println("--collect arguments are not correct!");
+          InputOutput.<String>println("--load arguments are not correct!");
           return;
         }
-        KryptoCLI.collect(split[0], size, split[1]);
+        KryptoCLI.load(split[0], size, split[1]);
+        return;
+      }
+      if ((cmd.get != null)) {
+        Integer _elvis_1 = null;
+        if (cmd.size != null) {
+          _elvis_1 = cmd.size;
+        } else {
+          _elvis_1 = Integer.valueOf(1);
+        }
+        final Integer size_1 = _elvis_1;
+        final String[] split_1 = cmd.get.split("\\|");
+        int _length_1 = split_1.length;
+        boolean _tripleNotEquals_1 = (_length_1 != 2);
+        if (_tripleNotEquals_1) {
+          InputOutput.<String>println("--get arguments are not correct!");
+          return;
+        }
+        KryptoCLI.get(split_1[0], size_1, split_1[1]);
         return;
       }
       if (cmd.test) {
@@ -99,7 +118,7 @@ public class KryptoCLI {
     }
   }
   
-  public static void collect(final String start, final Integer size, final String pairs) {
+  public static void load(final String start, final Integer size, final String pairs) {
     try {
       final LocalDate date = LocalDate.parse(start, KryptoCLI.formatter);
       final ModelService db = new ModelService();
@@ -129,6 +148,29 @@ public class KryptoCLI {
     } catch (Throwable _e) {
       throw Exceptions.sneakyThrow(_e);
     }
+  }
+  
+  public static void get(final String start, final Integer size, final String pair) {
+    final NeoDB db = new NeoDB("data");
+    final Range range = ModelService.calcRange(start, size);
+    StringConcatenation _builder = new StringConcatenation();
+    _builder.append("MATCH (c:Candle { pair:\"");
+    _builder.append(pair);
+    _builder.append("\" })");
+    _builder.newLineIfNotEmpty();
+    _builder.append("WHERE c.stamp IN range(");
+    _builder.append(range.start);
+    _builder.append(", ");
+    _builder.append(range.end);
+    _builder.append(")");
+    _builder.newLineIfNotEmpty();
+    _builder.append("RETURN c.open as open, c.close as close, c.high as high, c.low as low, c.volume as volume");
+    _builder.newLine();
+    _builder.append("ORDER BY c.stamp");
+    _builder.newLine();
+    final String query = _builder.toString();
+    InputOutput.<String>println(db.cypher(query).resultAsString());
+    System.exit(0);
   }
   
   public static void test() {
