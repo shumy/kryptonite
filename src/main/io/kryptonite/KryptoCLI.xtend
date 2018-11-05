@@ -26,9 +26,6 @@ class RCommand {
   @Option(names = #["-h", "--help"], help = true, description = "Display this help and exit.")
   public boolean help
   
-  @Option(names = #["--stack"], help = true, description = "Display the stack trace error if any.")
-  public boolean stack
-  
   @Option(names = #["--log"], help = true, description = "Display info logs.")
   public boolean log
   
@@ -100,7 +97,7 @@ class KryptoCLI {
         val size = cmd.size ?: 1
         val split = cmd.load.split("\\|")
         val pairs = if (split.length === 2) split.get(1) else //load all USD pairs
-          'BTCUSD ETHUSD XRPUSD EOSUSD BCHUSD IOTAUSD NEOUSD LTCUSD ETCUSD XMRUSD DASHUSD OMGUSD BTGUSD ZECUSD SANUSD QTUMUSD QASHUSD TNBUSD ZRXUSD' +
+          'BTCUSD ETHUSD XRPUSD EOSUSD BCHUSD IOTAUSD NEOUSD LTCUSD ETCUSD XMRUSD DASHUSD OMGUSD BTGUSD ZECUSD SANUSD QTUMUSD QASHUSD TNBUSD ZRXUSD ' +
           'ETPUSD SNPUSD YYWUSD DATAUSD MNAUSD FUNUSD EDOUSD GNTUSD BATUSD SPKUSD AVTUSD RRTUSD TRXUSD RCNUSD RLCUSD AIDUSD SNGUSD REPUSD ELFUSD'
         
         load(split.get(0), size, pairs)
@@ -137,10 +134,7 @@ class KryptoCLI {
       }*/
       
     } catch (Throwable ex) {
-      if (cmd.stack)
-        ex.printStackTrace
-      else
-        println('''ERROR -> «ex.class.name»: «ex.message»''')
+      ex.printStackTrace
       System.exit(-1)
     }
   }
@@ -175,8 +169,10 @@ class KryptoCLI {
         val from = date.plusDays(i).format(formatter)
         val candles = clt.getDayHistory(pair, from)
         val saved = db.saveCandles(pair, candles)
-        println('''LOAD: (pair=«pair», from=«from», saved=«saved»)''')
-        Thread.sleep(10_000) //don't exceed the rate limit...
+        
+        if (candles.size !== 0)
+          println('''LOAD: (pair=«pair», from=«candles.head.timestamp» to=«candles.last.timestamp», saved=«saved»)''')
+        Thread.sleep(5_000) //don't exceed the rate limit...
       }
     }
     System.exit(0)

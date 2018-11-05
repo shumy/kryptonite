@@ -87,7 +87,8 @@ class Exchanger {
     
     val res1 = adapter.get('''/candles/trade:1m:t«pair»/hist''', #{
       "limit" -> "1000",
-      "start" -> ""+startMillis,
+      "start" -> ""+ startMillis,
+      //"stop" -> ""+ (startMillis + 1000*60),
       "sort" -> "1"
     })
     
@@ -97,7 +98,8 @@ class Exchanger {
     val newStartMillis = res1.last.get(0).asLong + 60000
     val res2 = adapter.get('''/candles/trade:1m:t«pair»/hist''', #{
       "limit" -> "440",
-      "start" -> ""+newStartMillis,
+      "start" -> "" + newStartMillis,
+      //"stop" -> "" + (newStartMillis + 440*60),
       "sort" -> "1"
     })
     

@@ -126,7 +126,7 @@ class Bitfinex implements IAdapter {
     val txtRes = res.body.string
     if (res.code !== 200) {
       logger.error("GET-ERROR: {} {}", res.code, txtRes)
-      return null
+      throw new RuntimeException("ERROR: " + txtRes)
     }
     
     logger.info("GET-RESULT: {}", txtRes)
